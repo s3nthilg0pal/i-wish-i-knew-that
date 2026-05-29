@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}{{ config.title }}{% endblock title %}
+{% block description %}{{ section.description | default(value=config.description) }}{% endblock description %}
+
+{% block content %}
+{% set links_data = load_data(path="data/links.json") %}
+{% set links = links_data.links | default(value=[]) %}
+
+<div class="filter-bar" aria-label="Filter content type">
+  <button class="filter-button active" type="button" data-filter="all">ALL</button>
+  <button class="filter-button" type="button" data-filter="video">
+    <span class="type-dot type-video" aria-hidden="true"></span>
+    VIDEO
+  </button>
+  <button class="filter-button" type="button" data-filter="blog">
+    <span class="type-dot type-blog" aria-hidden="true"></span>
+    BLOG
+  </button>
+  <button class="filter-button" type="button" data-filter="product">
+    <span class="type-dot type-product" aria-hidden="true"></span>
+    PRODUCT
+  </button>
+  <button class="filter-button" type="button" data-filter="repo">
+    <span class="type-dot type-repo" aria-hidden="true"></span>
+    REPO
+  </button>
+  <button class="filter-button" type="button" data-filter="docs">
+    <span class="type-dot type-docs" aria-hidden="true"></span>
+    DOCS
+  </button>
+</div>
+
+<section class="archive" aria-label="Post index">
+  {% for link in links %}
+    <a class="archive-row" href="{{ link.url }}" target="_blank" rel="noopener noreferrer" data-type="{{ link.content_type | default(value='link') }}">
+      <span class="archive-title">
+        <span class="type-dot type-{{ link.content_type | default(value='link') }}" aria-hidden="true"></span>
+        {{ link.title }}
+      </span>
+      <span class="archive-line"></span>
+      <time datetime="{{ link.date }}">{{ link.date }}</time>
+    </a>
+  {% endfor %}
+</section>
+
+<nav class="pagination" aria-label="Pagination">
+  <button type="button" data-page-action="prev">PREV</button>
+  <span data-page-status>1 / 1</span>
+  <button type="button" data-page-action="next">NEXT</button>
+</nav>
+{% endblock content %}
+
+{% block scripts %}
+<script>
+  const filterButtons = document.querySelectorAll(".filter-button");
+  const archive = document.querySelector(".archive");
+  const archiveRows = Array.from(document.querySelectorAll(".archive-row"));
+  const pageStatus = document.querySelector("[data-page-status]");
+  const prevButton = document.querySelector("[data-page-action='prev']");
+  const nextButton = document.querySelector("[data-page-action='next']");
+  let activeFilter = "all";
+  let currentPage = 1;
+  let pageSize = 1;
+
+  function matchingRows() {
+    return archiveRows.filter((row) => activeFilter === "all" || row.dataset.type === activeFilter);
+  }
+
+  function calculatePageSize(rows) {
+    if (rows.length === 0) {
+      return 1;
+    }
+
+    archiveRows.forEach((row) => {
+      row.hidden = false;
+    });
+
+    const styles = window.getComputedStyle(archive);
+    const gap = parseFloat(styles.rowGap) || 0;
+    const rowHeight = rows[0].getBoundingClientRect().height;
+    const availableHeight = archive.getBoundingClientRect().height;
+
+    return Math.max(1, Math.floor((availableHeight + gap) / (rowHeight + gap)));
+  }
+
+  function renderArchive() {
+    const rows = matchingRows();
+    pageSize = calculatePageSize(rows);
+    const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
+    currentPage = Math.min(currentPage, pageCount);
+
+    const start = (currentPage - 1) * pageSize;
+    const end = start + pageSize;
+    const visibleRows = new Set(rows.slice(start, end));
+
+    archiveRows.forEach((row) => {
+      row.hidden = !visibleRows.has(row);
+    });
+
+    pageStatus.textContent = `${currentPage} / ${pageCount}`;
+    prevButton.disabled = currentPage === 1;
+    nextButton.disabled = currentPage === pageCount;
+  }
+
+  filterButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      activeFilter = button.dataset.filter;
+      currentPage = 1;
+
+      filterButtons.forEach((item) => item.classList.remove("active"));
+      button.classList.add("active");
+      renderArchive();
+    });
+  });
+
+  prevButton.addEventListener("click", () => {
+    currentPage -= 1;
+    renderArchive();
+  });
+
+  nextButton.addEventListener("click", () => {
+    currentPage += 1;
+    renderArchive();
+  });
+
+  window.addEventListener("resize", () => {
+    renderArchive();
+  });
+
+  renderArchive();
+</script>
+{% endblock scripts %}

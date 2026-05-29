@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}{{ section.title }} | {{ config.title }}{% endblock title %}
+{% block description %}{{ section.description | default(value=config.description) }}{% endblock description %}
+
+{% block content %}
+<div class="about-card">
+  <h1>{{ config.extra.about_title }}</h1>
+  {% if config.extra.about_subtitle %}
+    <p>{{ config.extra.about_subtitle }}</p>
+  {% endif %}
+  {% if config.extra.about_location %}
+    <p>{{ config.extra.about_location }}</p>
+  {% endif %}
+</div>
+{% endblock content %}

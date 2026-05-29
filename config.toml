@@ -1,0 +1,16 @@
+base_url = "http://127.0.0.1:1111"
+title = "Senthil Gopal"
+description = "I Wish I knew that"
+compile_sass = false
+build_search_index = false
+generate_feeds = true
+feed_filenames = ["rss.xml"]
+
+[extra]
+author = "Senthil"
+linkedin_url = "https://www.linkedin.com/in/gsksln"
+email = "senthil.santhoshgopal@gmail.com"
+github_url = "https://github.com/s3nthilg0pal"
+about_title = "Senthil Gopal"
+about_subtitle = "Software Engineer"
+about_location = "Auckland, New Zealand"

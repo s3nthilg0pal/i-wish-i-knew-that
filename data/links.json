@@ -1,0 +1,94 @@
+{
+  "links": [
+    {
+      "title": "I wish I knew that",
+      "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "content_type": "video",
+      "date": "2026-05-29"
+    },
+    {
+      "title": "Zola Documentation",
+      "url": "https://www.getzola.org/documentation/getting-started/overview/",
+      "content_type": "docs",
+      "date": "2019-03-11"
+    },
+    {
+      "title": "The Rust Programming Language",
+      "url": "https://doc.rust-lang.org/book/",
+      "content_type": "docs",
+      "date": "2019-03-10"
+    },
+    {
+      "title": "OpenAI Cookbook",
+      "url": "https://github.com/openai/openai-cookbook",
+      "content_type": "repo",
+      "date": "2019-03-09"
+    },
+    {
+      "title": "Hacker News",
+      "url": "https://news.ycombinator.com/",
+      "content_type": "blog",
+      "date": "2019-03-08"
+    },
+    {
+      "title": "GitHub Trending",
+      "url": "https://github.com/trending",
+      "content_type": "repo",
+      "date": "2019-03-05"
+    },
+    {
+      "title": "MDN Web Docs",
+      "url": "https://developer.mozilla.org/",
+      "content_type": "docs",
+      "date": "2017-03-11"
+    },
+    {
+      "title": "CSS Tricks",
+      "url": "https://css-tricks.com/",
+      "content_type": "blog",
+      "date": "2016-09-08"
+    },
+    {
+      "title": "Product Hunt",
+      "url": "https://www.producthunt.com/",
+      "content_type": "product",
+      "date": "2016-07-08"
+    },
+    {
+      "title": "Tiny Projects",
+      "url": "https://tinyprojects.dev/",
+      "content_type": "blog",
+      "date": "2015-09-08"
+    },
+    {
+      "title": "Vercel",
+      "url": "https://vercel.com/",
+      "content_type": "product",
+      "date": "2014-09-08"
+    },
+    {
+      "title": "Linear",
+      "url": "https://linear.app/",
+      "content_type": "product",
+      "date": "2014-09-08"
+    },
+    {
+      "title": "Refactoring UI",
+      "url": "https://www.refactoringui.com/",
+      "content_type": "product",
+      "date": "2014-09-08"
+    },
+    {
+      "title": "SQLite",
+      "url": "https://www.sqlite.org/",
+      "content_type": "docs",
+      "date": "2014-05-08"
+    },
+    {
+      "title": "Zed",
+      "url": "https://zed.dev/",
+      "content_type": "product",
+      "date": "2013-09-08"
+    }
+  ]
+}
