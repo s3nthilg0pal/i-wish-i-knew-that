@@ -245,6 +245,7 @@ p {
 }
 
 .about-card {
+  grid-row: 1 / -1;
   align-self: center;
   justify-self: center;
   text-align: center;
