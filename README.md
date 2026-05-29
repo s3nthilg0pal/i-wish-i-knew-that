@@ -77,3 +77,14 @@ Required GitHub repository secrets:
 LINK_API_URL=https://your-api.example.com
 AZURE_STATIC_WEB_APPS_API_TOKEN=...
 ```
+
+## Build and publish the API image
+
+The workflow at `.github/workflows/api-build-deploy.yml` validates the Python API, builds `Dockerfile.api`, and pushes the image to GitHub Container Registry:
+
+```text
+ghcr.io/s3nthilg0pal/iwishiknewthat-api:latest
+ghcr.io/s3nthilg0pal/iwishiknewthat-api:<commit-sha>
+```
+
+Argo CD can then deploy the API from the manifests in `k8s/base`.

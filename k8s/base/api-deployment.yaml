@@ -24,10 +24,10 @@ spec:
       containers:
         - name: api
           image: iwishiknewthat-api
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           workingDir: /app
           command:
-            - /usr/bin/python3
+            - /usr/local/bin/python
           args:
             - scripts/link_service.py
             - serve

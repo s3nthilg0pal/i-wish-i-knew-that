@@ -1,0 +1,9 @@
+.git
+.github
+.codex
+.agents
+public
+var
+__pycache__
+*.pyc
+wireframe.png

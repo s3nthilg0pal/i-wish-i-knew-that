@@ -18,5 +18,5 @@ secretGenerator:
 
 images:
   - name: iwishiknewthat-api
-    newName: ghcr.io/your-user/iwishiknewthat-api
+    newName: ghcr.io/s3nthilg0pal/iwishiknewthat-api
     newTag: latest
