@@ -9,9 +9,11 @@ import sys
 import tomllib
 import urllib.request
 from datetime import date, datetime, timezone
+from html import unescape
+from html.parser import HTMLParser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 ROOT = Path(__file__).resolve().parents[1]
 DB_PATH = ROOT / "var" / "links.db"
@@ -40,6 +42,31 @@ DOC_HOST_HINTS = {
 }
 
 
+class MetadataParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.og_title = ""
+        self.title = ""
+        self._in_title = False
+        self._title_parts = []
+
+    def handle_starttag(self, tag, attrs):
+        attrs = {key.lower(): value for key, value in attrs if key and value}
+        if tag.lower() == "meta" and attrs.get("property", "").lower() == "og:title":
+            self.og_title = attrs.get("content", "").strip()
+        elif tag.lower() == "title":
+            self._in_title = True
+
+    def handle_endtag(self, tag):
+        if tag.lower() == "title":
+            self._in_title = False
+            self.title = "".join(self._title_parts).strip()
+
+    def handle_data(self, data):
+        if self._in_title:
+            self._title_parts.append(data)
+
+
 def connect():
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
@@ -59,17 +86,59 @@ def connect():
     return conn
 
 
+def title_from_url(url):
+    parsed = urlparse(url)
+    slug = unquote(parsed.path.strip("/").split("/")[-1])
+    if not slug:
+        slug = parsed.netloc
+    title = re.sub(r"[-_]+", " ", slug)
+    title = re.sub(r"\s+", " ", title).strip()
+    return title.capitalize() if title else url
+
+
+def clean_page_title(title):
+    title = unescape(title or "")
+    title = re.sub(r"\s+", " ", title).strip()
+    return title
+
+
+def fetch_page_title(url):
+    request = urllib.request.Request(
+        url,
+        headers={
+            "accept": "text/html,application/xhtml+xml",
+            "user-agent": "iwishiknewthat-api",
+        },
+    )
+    with urllib.request.urlopen(request, timeout=5) as response:
+        content_type = response.headers.get("content-type", "")
+        if "html" not in content_type.lower():
+            return ""
+        html = response.read(128 * 1024).decode("utf-8", errors="replace")
+
+    parser = MetadataParser()
+    parser.feed(html)
+    return clean_page_title(parser.og_title or parser.title)
+
+
+def infer_title(url):
+    try:
+        return fetch_page_title(url) or title_from_url(url)
+    except (OSError, TimeoutError, ValueError):
+        return title_from_url(url)
+
+
 def validate_link(payload):
-    title = str(payload.get("title", "")).strip()
-    url = str(payload.get("url", "")).strip()
+    title = str(payload.get("title") or "").strip()
+    url = str(payload.get("url") or "").strip()
     link_date = str(payload.get("date") or date.today().isoformat()).strip()
 
-    if not title:
-        raise ValueError("title is required")
     if not url:
         raise ValueError("url is required")
     if urlparse(url).scheme not in {"http", "https"}:
         raise ValueError("url must start with http:// or https://")
+    if not title:
+        title = infer_title(url)
     content_type = str(payload.get("content_type") or infer_content_type(url)).strip().lower()
     if content_type not in ALLOWED_TYPES:
         raise ValueError(f"content_type must be one of: {', '.join(sorted(ALLOWED_TYPES))}")
@@ -273,7 +342,7 @@ def main():
     subparsers.add_parser("build")
 
     add_parser = subparsers.add_parser("add")
-    add_parser.add_argument("--title", required=True)
+    add_parser.add_argument("--title")
     add_parser.add_argument("--url", required=True)
     add_parser.add_argument("--type", default="link", dest="content_type")
     add_parser.add_argument("--date", default=date.today().isoformat())
