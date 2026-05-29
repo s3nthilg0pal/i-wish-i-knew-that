@@ -8,7 +8,7 @@ The Zola site is deployed separately to Azure Static Web Apps by GitHub Actions.
 
 - `iwishiknewthat-api`: one replica, owns SQLite writes, exposes `GET /links` and `POST /links`.
 - `iwishiknewthat-db`: persistent SQLite storage mounted at `/app/var`.
-- `iwishiknewthat-deploy-webhook`: secret containing the GitHub `repository_dispatch` endpoint and token.
+- `iwishiknewthat-deploy-webhook`: stable secret containing the GitHub `repository_dispatch` endpoint and token.
 
 SQLite should stay single-writer, so the API deployment intentionally uses:
 
@@ -31,12 +31,16 @@ The API image does not need Zola for Kubernetes runtime.
 
 After a successful `POST /links`, the API sends a GitHub `repository_dispatch` event to trigger the Azure Static Web Apps workflow.
 
-Set these secret values in an overlay or replace the generated secret values before applying:
+Create this secret separately before applying or syncing the API deployment:
 
-```text
-DEPLOY_WEBHOOK_URL=https://api.github.com/repos/OWNER/REPO/dispatches
-DEPLOY_WEBHOOK_TOKEN=github_pat_or_fine_grained_token
+```sh
+kubectl create secret generic iwishiknewthat-deploy-webhook \
+  -n iwishiknewthat \
+  --from-literal=DEPLOY_WEBHOOK_URL='https://api.github.com/repos/s3nthilg0pal/i-wish-i-knew-that/dispatches' \
+  --from-literal=DEPLOY_WEBHOOK_TOKEN='github_pat_or_fine_grained_token'
 ```
+
+Do not commit the real token. `k8s/base/api-secret.example.yaml` is only a template.
 
 ## Render manifests
 

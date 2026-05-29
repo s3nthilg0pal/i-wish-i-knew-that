@@ -9,13 +9,6 @@ resources:
   - api-deployment.yaml
   - api-service.yaml
 
-
-secretGenerator:
-  - name: iwishiknewthat-deploy-webhook
-    literals:
-      - DEPLOY_WEBHOOK_URL=https://api.github.com/repos/OWNER/REPO/dispatches
-      - DEPLOY_WEBHOOK_TOKEN=change-me
-
 images:
   - name: iwishiknewthat-api
     newName: ghcr.io/s3nthilg0pal/iwishiknewthat-api
