@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>I Wish I Knew That</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <main class="popup">
+      <section class="link-preview" aria-live="polite">
+        <p class="label">Current tab</p>
+        <h1 id="page-title">Loading...</h1>
+        <p id="page-url" class="url"></p>
+      </section>
+
+      <details class="details">
+        <summary>Options</summary>
+        <label class="field">
+          <span>API URL</span>
+          <input id="api-url" type="url" autocomplete="off" spellcheck="false">
+        </label>
+        <label class="checkbox">
+          <input id="send-title" type="checkbox">
+          <span>Send tab title</span>
+        </label>
+      </details>
+
+      <button id="save-link" type="button">Add link</button>
+      <p id="status" class="status" role="status"></p>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>

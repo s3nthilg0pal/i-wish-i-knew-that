@@ -1,0 +1,107 @@
+:root {
+  color-scheme: light;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  width: 340px;
+  margin: 0;
+  color: #111;
+  background: #fff;
+}
+
+.popup {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+}
+
+.label {
+  margin: 0 0 8px;
+  color: #777;
+  font-size: 12px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.url {
+  margin: 8px 0 0;
+  overflow-wrap: anywhere;
+  color: #555;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.details {
+  border-top: 1px solid #e6e6e6;
+  padding-top: 12px;
+}
+
+summary {
+  cursor: pointer;
+  color: #444;
+  font-size: 13px;
+}
+
+.field,
+.checkbox {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  color: #333;
+  font-size: 13px;
+}
+
+.checkbox {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+}
+
+input[type="url"] {
+  width: 100%;
+  border: 1px solid #d8d8d8;
+  border-radius: 6px;
+  padding: 9px 10px;
+  font: inherit;
+}
+
+button {
+  width: 100%;
+  border: 0;
+  border-radius: 6px;
+  padding: 11px 14px;
+  color: #fff;
+  background: #111;
+  font: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.status {
+  min-height: 18px;
+  margin: 0;
+  color: #555;
+  font-size: 13px;
+}
+
+.status.error {
+  color: #b42318;
+}
+
+.status.success {
+  color: #067647;
+}

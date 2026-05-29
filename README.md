@@ -21,6 +21,10 @@ The source of truth is SQLite at `var/links.db`. The helper script can update th
 
 Types: `video`, `blog`, `product`, `repo`, `docs`, `link`.
 
+## Add a link from Chrome
+
+Load the unpacked extension from `extension/` in `chrome://extensions`. It saves the current tab to `https://api.senthil.nz/links` by default.
+
 `content_type` is optional for the API and CLI. When omitted, the service infers a type from the URL:
 
 - YouTube/Vimeo -> `video`

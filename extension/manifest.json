@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "I Wish I Knew That",
+  "description": "Save the current tab to I Wish I Knew That.",
+  "version": "0.1.0",
+  "permissions": ["activeTab", "storage"],
+  "host_permissions": ["http://*/*", "https://*/*"],
+  "action": {
+    "default_title": "Save link",
+    "default_popup": "popup.html"
+  }
+}
