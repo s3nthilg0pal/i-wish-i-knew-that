@@ -1,6 +1,16 @@
 name: Deploy Azure Static Web App
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - config.toml
+      - content/**
+      - data/**
+      - static/**
+      - templates/**
+      - .github/workflows/azure-static-web-app.yml
   workflow_dispatch:
   repository_dispatch:
     types:

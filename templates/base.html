@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="{% block description %}{{ config.description }}{% endblock description %}">
     <title>{% block title %}{{ config.title }}{% endblock title %}</title>
-    <link rel="stylesheet" href="{{ get_url(path='css/site.css') }}">
+    <link rel="stylesheet" href="/css/site.css">
   </head>
   <body>
     <header class="site-header">
       <nav aria-label="Primary navigation">
-        <a {% if current_path == "/" %}class="active"{% endif %} href="{{ get_url(path='@/_index.md') }}">INDEX</a>
-        <a {% if current_path == "/about/" %}class="active"{% endif %} href="{{ get_url(path='@/about/_index.md') }}">ABOUT</a>
-        <a href="{{ get_url(path='rss.xml') }}">RSS</a>
+        <a {% if current_path == "/" %}class="active"{% endif %} href="/">INDEX</a>
+        <a {% if current_path == "/about/" %}class="active"{% endif %} href="/about/">ABOUT</a>
+        <a href="/rss.xml">RSS</a>
       </nav>
     </header>
 
