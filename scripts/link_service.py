@@ -13,7 +13,7 @@ from html import unescape
 from html.parser import HTMLParser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import unquote, urlparse
+from urllib.parse import quote, unquote, urlparse
 
 ROOT = Path(__file__).resolve().parents[1]
 DB_PATH = ROOT / "var" / "links.db"
@@ -26,6 +26,11 @@ VIDEO_HOSTS = {
     "www.youtube.com",
     "vimeo.com",
     "www.vimeo.com",
+}
+YOUTUBE_HOSTS = {
+    "youtu.be",
+    "youtube.com",
+    "www.youtube.com",
 }
 PRODUCT_HOSTS = {
     "linear.app",
@@ -102,6 +107,25 @@ def clean_page_title(title):
     return title
 
 
+def is_youtube_url(url):
+    host = urlparse(url).netloc.lower()
+    return host in YOUTUBE_HOSTS or host.removeprefix("www.") in YOUTUBE_HOSTS
+
+
+def fetch_youtube_title(url):
+    oembed_url = f"https://www.youtube.com/oembed?url={quote(url, safe='')}&format=json"
+    request = urllib.request.Request(
+        oembed_url,
+        headers={
+            "accept": "application/json",
+            "user-agent": "iwishiknewthat-api",
+        },
+    )
+    with urllib.request.urlopen(request, timeout=5) as response:
+        payload = json.loads(response.read(64 * 1024).decode("utf-8"))
+    return clean_page_title(payload.get("title", ""))
+
+
 def fetch_page_title(url):
     request = urllib.request.Request(
         url,
@@ -123,8 +147,10 @@ def fetch_page_title(url):
 
 def infer_title(url):
     try:
+        if is_youtube_url(url):
+            return fetch_youtube_title(url) or title_from_url(url)
         return fetch_page_title(url) or title_from_url(url)
-    except (OSError, TimeoutError, ValueError):
+    except (json.JSONDecodeError, OSError, TimeoutError, ValueError):
         return title_from_url(url)
 
 
