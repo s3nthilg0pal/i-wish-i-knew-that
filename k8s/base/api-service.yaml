@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/name: iwishiknewthat
     app.kubernetes.io/component: api
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   selector:
     app.kubernetes.io/name: iwishiknewthat
     app.kubernetes.io/component: api
