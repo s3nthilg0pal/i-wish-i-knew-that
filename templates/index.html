@@ -29,6 +29,10 @@
     <span class="type-dot type-docs" aria-hidden="true"></span>
     DOCS
   </button>
+  <button class="filter-button" type="button" data-filter="link">
+    <span class="type-dot type-link" aria-hidden="true"></span>
+    OTHER
+  </button>
 </div>
 
 <section class="archive" aria-label="Post index">
@@ -63,8 +67,18 @@
   let currentPage = 1;
   let pageSize = 1;
 
+  function normalizeType(type) {
+    const value = (type || "link").trim().toLowerCase();
+
+    if (value === "doc" || value === "documentation") {
+      return "docs";
+    }
+
+    return value;
+  }
+
   function matchingRows() {
-    return archiveRows.filter((row) => activeFilter === "all" || row.dataset.type === activeFilter);
+    return archiveRows.filter((row) => activeFilter === "all" || normalizeType(row.dataset.type) === activeFilter);
   }
 
   function calculatePageSize(rows) {
@@ -105,7 +119,7 @@
 
   filterButtons.forEach((button) => {
     button.addEventListener("click", () => {
-      activeFilter = button.dataset.filter;
+      activeFilter = normalizeType(button.dataset.filter);
       currentPage = 1;
 
       filterButtons.forEach((item) => item.classList.remove("active"));
