@@ -268,7 +268,8 @@ p {
 
 .site-footer p {
   margin: 0;
-  font-size: inherit;
+  font-size: clamp(14px, 1.2vw, 18px);
+  line-height: 1.2;
 }
 
 .social-links {
