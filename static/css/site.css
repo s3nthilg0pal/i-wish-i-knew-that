@@ -343,6 +343,19 @@ p {
     line-height: 1.28;
   }
 
+  .archive-title {
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    text-overflow: clip;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .archive-title::-webkit-scrollbar {
+    display: none;
+  }
+
   .archive-line {
     display: none;
   }
