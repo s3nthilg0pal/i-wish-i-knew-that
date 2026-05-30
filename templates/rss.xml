@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+{% set links_data = load_data(path="data/links.json") %}
+{% set links = links_data.links | default(value=[]) %}
+<rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/" version="2.0">
+  <channel>
+    <title>{{ config.title }}</title>
+    <link>{{ config.base_url }}</link>
+    <description>{{ config.description }}</description>
+    <generator>Zola</generator>
+    <language>{{ config.default_language }}</language>
+    <lastBuildDate>{{ now() | date(format="%a, %d %b %Y %H:%M:%S %z") }}</lastBuildDate>
+    <atom:link href="{{ config.base_url }}/rss.xml" rel="self" type="application/rss+xml"/>
+    {% for link in links %}
+      <item>
+        <title>{{ link.title }}</title>
+        <link>{{ link.url }}</link>
+        <guid isPermaLink="true">{{ link.url }}</guid>
+        <description>{{ link.content_type | default(value="link") | upper }} saved on {{ link.date }}</description>
+        <dc:date>{{ link.date }}T00:00:00+00:00</dc:date>
+      </item>
+    {% endfor %}
+  </channel>
+</rss>
