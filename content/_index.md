@@ -1,7 +1,7 @@
 +++
 title = "Senthil Gopal"
-description = "A clean, simple homepage built with Zola."
+description = "Senthil Gopal's curated index of useful software engineering links, tools, docs, videos, products, and repositories."
 sort_by = "date"
 +++
 
-Thoughtful pages, quiet typography, and only the essentials.
+A curated index of software engineering links, tools, docs, videos, products, and repositories.

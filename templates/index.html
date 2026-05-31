@@ -2,6 +2,10 @@
 
 {% block title %}{{ config.title }}{% endblock title %}
 {% block description %}{{ section.description | default(value=config.description) }}{% endblock description %}
+{% block og_title %}{{ config.title }}{% endblock og_title %}
+{% block og_description %}{{ section.description | default(value=config.description) }}{% endblock og_description %}
+{% block twitter_title %}{{ config.title }}{% endblock twitter_title %}
+{% block twitter_description %}{{ section.description | default(value=config.description) }}{% endblock twitter_description %}
 
 {% block content %}
 {% set links_data = load_data(path="data/links.json") %}

@@ -1,6 +1,6 @@
 base_url = "https://senthil.nz"
 title = "Senthil Gopal"
-description = "I Wish I knew that"
+description = "A curated index of useful software engineering links, tools, docs, videos, products, and repositories."
 compile_sass = false
 build_search_index = false
 generate_feeds = true

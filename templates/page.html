@@ -2,6 +2,30 @@
 
 {% block title %}{{ page.title }} | {{ config.title }}{% endblock title %}
 {% block description %}{{ page.description | default(value=config.description) }}{% endblock description %}
+{% block og_title %}{{ page.title }} | {{ config.title }}{% endblock og_title %}
+{% block og_description %}{{ page.description | default(value=config.description) }}{% endblock og_description %}
+{% block og_type %}article{% endblock og_type %}
+{% block twitter_title %}{{ page.title }} | {{ config.title }}{% endblock twitter_title %}
+{% block twitter_description %}{{ page.description | default(value=config.description) }}{% endblock twitter_description %}
+{% block structured_data %}
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": {{ page.title | json_encode | safe }},
+      "description": {{ page.description | default(value=config.description) | json_encode | safe }},
+      "url": {{ current_url | default(value=config.base_url ~ current_path) | json_encode | safe }},
+      "author": {
+        "@type": "Person",
+        "name": {{ config.extra.author | json_encode | safe }}
+      },
+      "publisher": {
+        "@type": "Person",
+        "name": {{ config.extra.author | json_encode | safe }}
+      }
+    }
+  </script>
+{% endblock structured_data %}
 
 {% block content %}
 {% if page.extra.subtitle or page.extra.location %}
