@@ -12,5 +12,13 @@ linkedin_url = "https://www.linkedin.com/in/gsksln"
 email = "senthil.santhoshgopal@gmail.com"
 github_url = "https://github.com/s3nthilg0pal"
 about_title = "Senthil Gopal"
-about_subtitle = "Software Engineer"
+about_subtitle = "Senior Software Engineer"
 about_location = "Auckland, New Zealand"
+knows_about = [
+  "Software engineering",
+  "Web development",
+  "Python",
+  "dotnet",
+  "Kubernetes",
+  "Developer tools",
+]

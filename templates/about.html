@@ -7,23 +7,22 @@
 {% block twitter_title %}{{ section.title }} | {{ config.title }}{% endblock twitter_title %}
 {% block twitter_description %}{{ section.description | default(value=config.description) }}{% endblock twitter_description %}
 {% block structured_data %}
-  <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Person",
-      "name": {{ config.extra.about_title | json_encode | safe }},
-      "url": {{ config.base_url | json_encode | safe }},
-      "jobTitle": {{ config.extra.about_subtitle | json_encode | safe }},
-      "address": {
-        "@type": "PostalAddress",
-        "addressLocality": {{ config.extra.about_location | json_encode | safe }}
-      },
-      "sameAs": [
-        {{ config.extra.linkedin_url | json_encode | safe }},
-        {{ config.extra.github_url | json_encode | safe }}
-      ]
-    }
-  </script>
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": {{ config.extra.about_title | json_encode | safe }},
+    "url": {{ config.base_url | json_encode | safe }},
+    "jobTitle": {{ config.extra.about_subtitle | json_encode | safe }},
+    "knowsAbout": {{ config.extra.knows_about | json_encode | safe }},
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": {{ config.extra.about_location | json_encode | safe }}
+    },
+    "sameAs": [
+      {{ config.extra.linkedin_url | json_encode | safe }},
+      {{ config.extra.github_url | json_encode | safe }}
+    ]
+  }
 {% endblock structured_data %}
 
 {% block content %}

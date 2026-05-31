@@ -18,26 +18,28 @@
     <title>{% block title %}{{ config.title }}{% endblock title %}</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/css/site.css">
-    {% block structured_data %}
-      <script type="application/ld+json">
-        {
-          "@context": "https://schema.org",
-          "@type": "WebSite",
-          "name": {{ config.title | json_encode | safe }},
+    <script type="application/ld+json">
+      {% block structured_data %}
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": {{ config.title | json_encode | safe }},
+        "url": {{ config.base_url | json_encode | safe }},
+        "description": {{ config.description | json_encode | safe }},
+        "author": {
+          "@type": "Person",
+          "name": {{ config.extra.author | json_encode | safe }},
           "url": {{ config.base_url | json_encode | safe }},
-          "description": {{ config.description | json_encode | safe }},
-          "author": {
-            "@type": "Person",
-            "name": {{ config.extra.author | json_encode | safe }},
-            "url": {{ config.base_url | json_encode | safe }},
-            "sameAs": [
-              {{ config.extra.linkedin_url | json_encode | safe }},
-              {{ config.extra.github_url | json_encode | safe }}
-            ]
-          }
+          "jobTitle": {{ config.extra.about_subtitle | json_encode | safe }},
+          "knowsAbout": {{ config.extra.knows_about | json_encode | safe }},
+          "sameAs": [
+            {{ config.extra.linkedin_url | json_encode | safe }},
+            {{ config.extra.github_url | json_encode | safe }}
+          ]
         }
-      </script>
-    {% endblock structured_data %}
+      }
+      {% endblock structured_data %}
+    </script>
   </head>
   <body>
     <header class="site-header">
