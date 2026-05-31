@@ -54,7 +54,7 @@
     </main>
 
     <footer class="site-footer">
-      <p>commit. push. repeat.</p>
+      <p data-easter-egg-trigger>commit. push. repeat.</p>
       <div class="social-links" aria-label="Social links">
         <a href="/rss.xml" aria-label="RSS feed">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" aria-hidden="true">
@@ -78,6 +78,52 @@
         </a>
       </div>
     </footer>
+    <div class="easter-egg" role="status" aria-live="polite" hidden>
+      you found the quiet corner. ship it.
+    </div>
+    <script>
+      (() => {
+        const trigger = document.querySelector("[data-easter-egg-trigger]");
+        const message = document.querySelector(".easter-egg");
+        const secret = "iwishiknewthat";
+        let typed = "";
+        let taps = 0;
+        let hideTimer;
+
+        function revealEasterEgg() {
+          window.clearTimeout(hideTimer);
+          message.hidden = false;
+          message.classList.add("show");
+          document.documentElement.classList.add("easter-egg-found");
+
+          hideTimer = window.setTimeout(() => {
+            message.classList.remove("show");
+          }, 4200);
+        }
+
+        trigger.addEventListener("click", () => {
+          taps += 1;
+
+          if (taps >= 5) {
+            taps = 0;
+            revealEasterEgg();
+          }
+        });
+
+        window.addEventListener("keydown", (event) => {
+          if (event.metaKey || event.ctrlKey || event.altKey) {
+            return;
+          }
+
+          typed = `${typed}${event.key.toLowerCase()}`.slice(-secret.length);
+
+          if (typed === secret) {
+            typed = "";
+            revealEasterEgg();
+          }
+        });
+      })();
+    </script>
     {% block scripts %}{% endblock scripts %}
   </body>
 </html>
