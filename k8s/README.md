@@ -24,6 +24,7 @@ The API image must include:
 
 - this repository at `/app`
 - `/usr/bin/python3`
+- Python dependencies from `requirements-api.txt`
 
 The API image does not need Zola for Kubernetes runtime.
 
@@ -37,8 +38,11 @@ Create this secret separately before applying or syncing the API deployment:
 kubectl create secret generic iwishiknewthat-deploy-webhook \
   -n iwishiknewthat \
   --from-literal=DEPLOY_WEBHOOK_URL='https://api.github.com/repos/s3nthilg0pal/i-wish-i-knew-that/dispatches' \
-  --from-literal=DEPLOY_WEBHOOK_TOKEN='github_pat_or_fine_grained_token'
+  --from-literal=DEPLOY_WEBHOOK_TOKEN='github_pat_or_fine_grained_token' \
+  --from-literal=LINK_API_TOKEN='long_random_token_for_post_links'
 ```
+
+`POST /links` requires `LINK_API_TOKEN` as `Authorization: Bearer <token>` or `X-API-Token: <token>`. If the token is missing from the deployment secret, writes fail closed.
 
 Do not commit the real token. `k8s/base/api-secret.example.yaml` is only a template.
 

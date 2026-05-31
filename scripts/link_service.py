@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import hmac
 import json
 import os
 import re
@@ -13,6 +14,7 @@ from html import unescape
 from html.parser import HTMLParser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from typing import Literal
 from urllib.parse import quote, unquote, urlparse
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -45,31 +47,74 @@ DOC_HOST_HINTS = {
     "docs.github.com",
     "www.sqlite.org",
 }
+OLLAMA_DEFAULT_MODEL = "qwen3.5:2b"
+CLASSIFIER_PROMPT = """Classify this URL for a personal link archive.
+
+Categories:
+video, blog, product, repo, docs, link
+
+Definitions:
+video = watchable video or video platform page
+blog = article, essay, tutorial, news, blog post
+product = tool, app, SaaS, service, company product page
+repo = source code repository
+docs = official docs, API reference, manual, guide
+link = fallback when unclear
+
+Choose the best category. If uncertain, choose link.
+
+Input:
+title={title}
+url={url}
+excerpt={excerpt}
+"""
 
 
 class MetadataParser(HTMLParser):
     def __init__(self):
         super().__init__()
         self.og_title = ""
+        self.description = ""
         self.title = ""
         self._in_title = False
+        self._skip_tag = ""
         self._title_parts = []
+        self._text_parts = []
 
     def handle_starttag(self, tag, attrs):
+        tag = tag.lower()
         attrs = {key.lower(): value for key, value in attrs if key and value}
-        if tag.lower() == "meta" and attrs.get("property", "").lower() == "og:title":
-            self.og_title = attrs.get("content", "").strip()
-        elif tag.lower() == "title":
+        if tag in {"script", "style", "noscript"}:
+            self._skip_tag = tag
+        if tag == "meta":
+            property_name = attrs.get("property", "").lower()
+            name = attrs.get("name", "").lower()
+            if property_name == "og:title":
+                self.og_title = attrs.get("content", "").strip()
+            elif property_name == "og:description" or name == "description":
+                self.description = attrs.get("content", "").strip()
+        elif tag == "title":
             self._in_title = True
 
     def handle_endtag(self, tag):
-        if tag.lower() == "title":
+        tag = tag.lower()
+        if tag == self._skip_tag:
+            self._skip_tag = ""
+        if tag == "title":
             self._in_title = False
             self.title = "".join(self._title_parts).strip()
 
     def handle_data(self, data):
         if self._in_title:
             self._title_parts.append(data)
+        elif not self._skip_tag and len(" ".join(self._text_parts)) < 1200:
+            text = data.strip()
+            if text:
+                self._text_parts.append(text)
+
+    @property
+    def excerpt(self):
+        return clean_page_title(self.description or " ".join(self._text_parts))[:1000]
 
 
 def connect():
@@ -126,7 +171,7 @@ def fetch_youtube_title(url):
     return clean_page_title(payload.get("title", ""))
 
 
-def fetch_page_title(url):
+def fetch_page_metadata(url):
     request = urllib.request.Request(
         url,
         headers={
@@ -142,7 +187,14 @@ def fetch_page_title(url):
 
     parser = MetadataParser()
     parser.feed(html)
-    return clean_page_title(parser.og_title or parser.title)
+    return {
+        "title": clean_page_title(parser.og_title or parser.title),
+        "excerpt": parser.excerpt,
+    }
+
+
+def fetch_page_title(url):
+    return fetch_page_metadata(url)["title"]
 
 
 def infer_title(url):
@@ -165,7 +217,10 @@ def validate_link(payload):
         raise ValueError("url must start with http:// or https://")
     if not title:
         title = infer_title(url)
-    content_type = str(payload.get("content_type") or infer_content_type(url)).strip().lower()
+    provided_type = payload.get("content_type")
+    content_type = str(provided_type or infer_content_type(url, title)).strip().lower()
+    if content_type == "auto":
+        content_type = infer_content_type(url, title)
     if content_type not in ALLOWED_TYPES:
         raise ValueError(f"content_type must be one of: {', '.join(sorted(ALLOWED_TYPES))}")
     if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", link_date):
@@ -179,7 +234,14 @@ def validate_link(payload):
     }
 
 
-def infer_content_type(url):
+def infer_content_type(url, title=""):
+    heuristic_type = infer_content_type_from_url(url)
+    if heuristic_type != "link":
+        return heuristic_type
+    return infer_content_type_with_llm(url, title) or "link"
+
+
+def infer_content_type_from_url(url):
     parsed = urlparse(url)
     host = parsed.netloc.lower().removeprefix("www.")
     path = parsed.path.lower()
@@ -198,6 +260,81 @@ def infer_content_type(url):
     if host in PRODUCT_HOSTS or full_host in PRODUCT_HOSTS:
         return "product"
     return "link"
+
+
+def env_flag_enabled(name):
+    return os.environ.get(name, "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def build_category_response_model():
+    from pydantic import BaseModel
+
+    class LinkCategory(BaseModel):
+        content_type: Literal["video", "blog", "product", "repo", "docs", "link"]
+
+    return LinkCategory
+
+
+class OllamaCategoryAgent:
+    def __init__(self, client, model, response_model):
+        self.client = client
+        self.model = model
+        self.response_model = response_model
+
+    def classify(self, url, title="", excerpt=""):
+        prompt = CLASSIFIER_PROMPT.format(title=title or title_from_url(url), url=url, excerpt=excerpt)
+        response = self.client.chat(
+            model=self.model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You classify saved links. Return a JSON object with a content_type field. Use the requested response format.",
+                },
+                {"role": "user", "content": prompt},
+            ],
+            format=self.response_model.model_json_schema(),
+            think=False,
+            options={"temperature": 0, "num_predict": 32},
+        )
+        result = self.response_model.model_validate_json(response["message"]["content"])
+        content_type = str(result.content_type).strip().lower()
+        if content_type in ALLOWED_TYPES:
+            return content_type
+        return ""
+
+
+def infer_content_type_with_llm(url, title=""):
+    if not env_flag_enabled("OLLAMA_CLASSIFIER_ENABLED"):
+        return ""
+
+    try:
+        import ollama
+    except ImportError:
+        print("OLLAMA_CLASSIFIER_ENABLED is set, but the ollama package is not installed", file=sys.stderr)
+        return ""
+    try:
+        response_model = build_category_response_model()
+    except ImportError:
+        print("OLLAMA_CLASSIFIER_ENABLED is set, but the pydantic package is not installed", file=sys.stderr)
+        return ""
+
+    excerpt = ""
+    try:
+        if not is_youtube_url(url):
+            metadata = fetch_page_metadata(url)
+            title = title or metadata["title"]
+            excerpt = metadata["excerpt"]
+    except (OSError, TimeoutError, ValueError):
+        pass
+
+    model = os.environ.get("OLLAMA_CLASSIFIER_MODEL", OLLAMA_DEFAULT_MODEL)
+    agent = OllamaCategoryAgent(ollama, model, response_model)
+
+    try:
+        return agent.classify(url, title, excerpt)
+    except Exception as error:
+        print(f"ollama classification failed for {url}: {error}", file=sys.stderr)
+        return ""
 
 
 def add_link(payload):
@@ -319,6 +456,23 @@ class LinkHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def authenticated(self):
+        expected_token = os.environ.get("LINK_API_TOKEN", "").strip()
+        if not expected_token:
+            self.send_json(503, {"error": "LINK_API_TOKEN is not configured"})
+            return False
+
+        authorization = self.headers.get("authorization", "").strip()
+        supplied_token = self.headers.get("x-api-token", "").strip()
+        if authorization.lower().startswith("bearer "):
+            supplied_token = authorization[7:].strip()
+
+        if not supplied_token or not hmac.compare_digest(supplied_token, expected_token):
+            self.send_json(401, {"error": "unauthorized"})
+            return False
+
+        return True
+
     def do_GET(self):
         if self.path == "/health":
             self.send_json(200, {"ok": True})
@@ -331,6 +485,8 @@ class LinkHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         if self.path != "/links":
             self.send_json(404, {"error": "not found"})
+            return
+        if not self.authenticated():
             return
 
         length = int(self.headers.get("content-length", "0"))
@@ -370,7 +526,7 @@ def main():
     add_parser = subparsers.add_parser("add")
     add_parser.add_argument("--title")
     add_parser.add_argument("--url", required=True)
-    add_parser.add_argument("--type", default="link", dest="content_type")
+    add_parser.add_argument("--type", dest="content_type")
     add_parser.add_argument("--date", default=date.today().isoformat())
 
     serve_parser = subparsers.add_parser("serve")

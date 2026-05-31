@@ -3,6 +3,9 @@ FROM python:3.14-slim
 WORKDIR /app
 
 COPY scripts/ scripts/
+COPY requirements-api.txt .
+
+RUN pip install --no-cache-dir -r requirements-api.txt
 
 RUN useradd --create-home --uid 1000 appuser \
   && mkdir -p /app/var /app/data \
