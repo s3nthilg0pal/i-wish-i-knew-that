@@ -3,6 +3,7 @@ const DEFAULT_API_URL = "https://api.senthil.nz/links";
 const titleElement = document.querySelector("#page-title");
 const urlElement = document.querySelector("#page-url");
 const apiUrlInput = document.querySelector("#api-url");
+const apiTokenInput = document.querySelector("#api-token");
 const sendTitleInput = document.querySelector("#send-title");
 const saveButton = document.querySelector("#save-link");
 const statusElement = document.querySelector("#status");
@@ -25,15 +26,18 @@ function normalizeApiUrl(value) {
 async function loadSettings() {
   const settings = await chrome.storage.sync.get({
     apiUrl: DEFAULT_API_URL,
+    apiToken: "",
     sendTitle: false
   });
   apiUrlInput.value = settings.apiUrl;
+  apiTokenInput.value = settings.apiToken;
   sendTitleInput.checked = settings.sendTitle;
 }
 
 async function saveSettings() {
   await chrome.storage.sync.set({
     apiUrl: normalizeApiUrl(apiUrlInput.value),
+    apiToken: apiTokenInput.value.trim(),
     sendTitle: sendTitleInput.checked
   });
 }
@@ -70,9 +74,15 @@ async function saveCurrentLink() {
       payload.title = activeTab.title;
     }
 
+    const headers = { "content-type": "application/json" };
+    const apiToken = apiTokenInput.value.trim();
+    if (apiToken) {
+      headers["x-api-key"] = apiToken;
+    }
+
     const response = await fetch(normalizeApiUrl(apiUrlInput.value), {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers,
       body: JSON.stringify(payload)
     });
 
@@ -90,6 +100,7 @@ async function saveCurrentLink() {
 }
 
 apiUrlInput.addEventListener("change", saveSettings);
+apiTokenInput.addEventListener("change", saveSettings);
 sendTitleInput.addEventListener("change", saveSettings);
 saveButton.addEventListener("click", saveCurrentLink);
 
