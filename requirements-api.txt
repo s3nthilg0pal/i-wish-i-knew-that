@@ -1,2 +1,0 @@
-ollama>=0.5.0
-pydantic>=2.0
