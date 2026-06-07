@@ -8,14 +8,14 @@
     <link rel="canonical" href="{% block canonical %}{{ current_url | default(value=config.base_url ~ current_path) | safe }}{% endblock canonical %}">
     <link rel="alternate" type="application/rss+xml" title="{{ config.title }}" href="{{ get_url(path='rss.xml', trailing_slash=false) }}">
     <meta property="og:site_name" content="{{ config.title }}">
-    <meta property="og:title" content="{% block og_title %}{{ config.title }}{% endblock og_title %}">
+    <meta property="og:title" content="{% block og_title %}{{ config.title }} | {{ config.extra.about_subtitle }} | NZ{% endblock og_title %}">
     <meta property="og:description" content="{% block og_description %}{{ config.description }}{% endblock og_description %}">
     <meta property="og:type" content="{% block og_type %}website{% endblock og_type %}">
     <meta property="og:url" content="{% block og_url %}{{ current_url | default(value=config.base_url ~ current_path) | safe }}{% endblock og_url %}">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="{% block twitter_title %}{{ config.title }}{% endblock twitter_title %}">
+    <meta name="twitter:title" content="{% block twitter_title %}{{ config.title }} | {{ config.extra.about_subtitle }} | NZ{% endblock twitter_title %}">
     <meta name="twitter:description" content="{% block twitter_description %}{{ config.description }}{% endblock twitter_description %}">
-    <title>{% block title %}{{ config.title }}{% endblock title %}</title>
+    <title>{% block title %}{{ config.title }} | {{ config.extra.about_subtitle }} | NZ{% endblock title %}</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/css/site.css">
     <script type="application/ld+json">
