@@ -1,97 +1,104 @@
-# Link API
+# I Wish I Knew That
 
-This Zola site reads archive links from `data/links.json`.
+A Zola-powered personal index of useful software engineering links, tools, docs, videos, products, and repositories.
 
-The source of truth is SQLite at `var/links.db`. The helper script can update the database, regenerate `data/links.json`, and rebuild the site for local use. In Kubernetes, the API only stores links and triggers the external deploy workflow.
+The site renders links from `data/links.json`, exposes them through homepage filters, and can be updated by the Chrome extension in `extension/`.
 
-## Seed the database
+## Project Structure
 
-```sh
-/usr/bin/python3 scripts/link_service.py import
+```text
+config.toml                  Zola site configuration
+content/                     Zola content pages
+data/links.json              Link archive consumed by the homepage
+static/                      Static assets copied into the build
+templates/                   Zola templates
+extension/                   Chrome extension for saving the current tab
+.github/workflows/           Azure Static Web Apps deployment workflow
 ```
 
-## Add a link from the CLI
+Generated or local-only paths such as `public/` and `var/` are ignored.
 
-```sh
-/usr/bin/python3 scripts/link_service.py add \
-  --title "Example" \
-  --url "https://example.com" \
-  --type blog
-```
+## Link Data
 
-Types: `video`, `blog`, `product`, `repo`, `docs`, `link`.
-
-Omit `--type` to infer the category automatically.
-
-## Add a link from Chrome
-
-Load the unpacked extension from `extension/` in `chrome://extensions`. It saves the current tab to `https://api.senthil.nz/links` by default.
-
-`content_type` is optional for the API and CLI. When omitted, the service first infers a type from the URL:
-
-- YouTube/Vimeo -> `video`
-- GitHub repository URLs -> `repo`
-- documentation-looking URLs -> `docs`
-- blog/news/article URLs -> `blog`
-- known product domains -> `product`
-- everything else -> `link`
-
-For ambiguous links, you can enable an Ollama-backed classifier:
-
-```sh
-export OLLAMA_CLASSIFIER_ENABLED=1
-export OLLAMA_HOST=https://ollama.home.arpa
-export OLLAMA_CLASSIFIER_MODEL=qwen3.5:2b
-```
-
-The model must return one of the same categories. If Ollama is unavailable or returns an invalid response, the service falls back to `link`.
-The classifier uses Ollama's structured output support with a Pydantic response model, so the JSON schema is passed through the SDK instead of being written into the prompt.
-
-## Run the API
-
-```sh
-export LINK_API_TOKEN='replace-me-with-a-long-random-token'
-/usr/bin/python3 scripts/link_service.py serve --port 8787
-```
-
-Add a link:
-
-```sh
-curl -X POST http://127.0.0.1:8787/links \
-  -H "authorization: Bearer $LINK_API_TOKEN" \
-  -H 'content-type: application/json' \
-  -d '{"title":"Example","url":"https://example.com","content_type":"blog"}'
-```
-
-`POST /links` requires `LINK_API_TOKEN`. Send it as `Authorization: Bearer <token>` or `X-API-Token: <token>`. If the token is not configured, writes fail closed.
-
-Every successful API insert regenerates the local `data/links.json` export and, when configured, triggers a deployment webhook. The API does not run Zola in Kubernetes.
-
-## Redeploy Azure Static Web Apps
-
-Set these environment variables on the API deployment:
-
-```sh
-DEPLOY_WEBHOOK_URL=https://api.github.com/repos/OWNER/REPO/dispatches
-DEPLOY_WEBHOOK_TOKEN=github_pat_or_fine_grained_token
-LINK_API_TOKEN=long_random_token_for_post_links
-```
-
-The token needs permission to create `repository_dispatch` events. After `POST /links`, the API sends:
+The homepage reads `data/links.json` with this shape:
 
 ```json
 {
-  "event_type": "link-added",
-  "client_payload": {"link": {}}
+  "links": [
+    {
+      "title": "Example",
+      "url": "https://example.com",
+      "date": "2026-06-07",
+      "content_type": "blog"
+    }
+  ]
 }
 ```
 
-The workflow at `.github/workflows/azure-static-web-app.yml` then:
+Supported `content_type` values are:
 
-1. fetches `GET /links` from the API,
-2. writes `data/links.json`,
-3. runs `zola build`,
-4. deploys `public/` to Azure Static Web Apps.
+- `video`
+- `blog`
+- `product`
+- `repo`
+- `docs`
+- `link`
+
+Unknown or missing content types render as `link`.
+
+## Run Locally
+
+Install Zola, then serve the site from the repository root:
+
+```sh
+zola serve
+```
+
+Build the static site:
+
+```sh
+zola build
+```
+
+The generated site is written to `public/`.
+
+## Chrome Extension
+
+The extension in `extension/` saves the active browser tab to the link API.
+
+1. Open `chrome://extensions`.
+2. Enable Developer mode.
+3. Click Load unpacked.
+4. Select the `extension/` directory.
+
+The popup posts to `https://api.senthil.nz/links` by default. Use the popup options to change the API URL, set an API token, and choose whether to include the page title.
+
+When a token is configured, the extension sends it as:
+
+```text
+x-api-key: <token>
+```
+
+## API
+
+The link API lives in a separate repository:
+
+https://github.com/s3nthilg0pal/senthil-api
+
+This site expects the API to expose:
+
+- `GET /links`, returning the same JSON shape as `data/links.json`
+- `POST /links`, accepting a link payload from the Chrome extension
+
+## Deployment
+
+`.github/workflows/azure-static-web-app.yml` deploys the Zola site to Azure Static Web Apps on pushes to `main`, manual dispatches, and `repository_dispatch` events with type `link-added`.
+
+Before building, the workflow fetches the current archive from:
+
+```text
+${LINK_API_URL}/links
+```
 
 Required GitHub repository secrets:
 
@@ -100,13 +107,4 @@ LINK_API_URL=https://your-api.example.com
 AZURE_STATIC_WEB_APPS_API_TOKEN=...
 ```
 
-## Build and publish the API image
-
-The workflow at `.github/workflows/api-build-deploy.yml` validates the Python API, builds `Dockerfile.api`, and pushes the image to GitHub Container Registry:
-
-```text
-ghcr.io/s3nthilg0pal/iwishiknewthat-api:latest
-ghcr.io/s3nthilg0pal/iwishiknewthat-api:<commit-sha>
-```
-
-Argo CD can then deploy the API from the manifests in `k8s/base`.
+The fetched response must match the `data/links.json` format shown above.
